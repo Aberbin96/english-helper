@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 
   const users = await prisma.user.findMany({ where: { pushSub: { not: null } } });
   const results = await Promise.allSettled(
-    users.map((u) => sendNotification(u.pushSub!, { title, body }))
+    users.map((u) => sendNotification(u.pushSub as string, { title, body }))
   );
 
   const sent = results.filter((r) => r.status === "fulfilled").length;
