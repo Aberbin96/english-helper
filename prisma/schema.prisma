@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  emailVerified DateTime?
+  currentStage  Int          @default(1)
+  startDate     DateTime     @default(now())
+  pushSub       String?
+  notifSettings Json?
+  accounts      Account[]
+  sessions      Session[]
+  logs          DailyLog[]
+  vocab         VocabEntry[]
+  diary         DiaryEntry[]
+  checkpoints   Checkpoint[]
+}
+
+model DailyLog {
+  id     String   @id @default(cuid())
+  userId String
+  date   DateTime
+  blocks Json
+  user   User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+}
+
+model VocabEntry {
+  id         String   @id @default(cuid())
+  userId     String
+  word       String
+  definition String
+  example    String?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model DiaryEntry {
+  id      String   @id @default(cuid())
+  userId  String
+  date    DateTime
+  content String
+  user    User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+}
+
+model Checkpoint {
+  id     String    @id @default(cuid())
+  userId String
+  stage  Int
+  number Int
+  done   Boolean   @default(false)
+  doneAt DateTime?
+  user   User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, stage, number])
+}
